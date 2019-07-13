@@ -7,6 +7,10 @@ class RenderedDisplayMessagePacket extends RNetPacket {
         this.messageType = 0x06;
     }
 
+    requiresHandshake() {
+        return true;
+    }
+
     getLowValue() {
         return this.valueLow;
     }

@@ -3,3 +3,5 @@ sources.json
 zones.json
 config.json
 package-lock.json
+npm-debug.log
+build/*

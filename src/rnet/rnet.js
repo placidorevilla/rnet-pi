@@ -206,6 +206,7 @@ class RNet extends EventEmitter {
                             powered
                         )
                     );
+                    zone.requestInfo();
                 }
 
                 if (powered) {
@@ -233,6 +234,7 @@ class RNet extends EventEmitter {
                             volume
                         )
                     );
+                    zone.requestInfo();
                 }
                 this.emit("volume", zone, volume);
             })
@@ -251,6 +253,7 @@ class RNet extends EventEmitter {
                             sourceID
                         )
                     );
+                    zone.requestInfo();
                 }
 
                 let source = this.getSource(sourceID);
@@ -277,6 +280,7 @@ class RNet extends EventEmitter {
                             value
                         )
                     );
+                    zone.requestInfo();
                 }
                 this.emit("parameter", zone, parameterID, value);
             });
@@ -548,13 +552,17 @@ class RNet extends EventEmitter {
             }
             else {
                 this._serialPort.write(packet.getBuffer());
-                //console.log("DEBUG: Sent packet " + packet.constructor.name + " to RNet.");
+                //console.log("DEBUG: Sent packet " + packet.constructor.name + " to RNet. [%s]", packet.getBuffer().toString('hex'));
+				
+				/*if (packet instanceof RequestDataPacket) {
+					console.log("DEBUG: Sent packet " + packet.constructor.name + " to RNet. ZONE %d", packet.targetPath[2]);
+				}*/
 
                 if (packet.causesResponseWithHandshake()) {
                     //console.log("DEBUG: Now expecting to perform handshake.");
                     this._waitingForHandshake = true;
                     this._waitingForHandshakeTimeout = setTimeout(() => {
-                        console.warn("Waited for expected handshake for too long. Continuing...");
+                        console.warn("Waited for expected handshake for too long. Continuing... (%d)", this._waitingForHandshake);
                         this._waitingForHandshake = false;
                         if (this._packetQueue.length > 0) {
                             this.sendData(this._packetQueue.shift(), true);
@@ -625,12 +633,14 @@ class RNet extends EventEmitter {
         //console.log("DEBUG: Received packet " + packet.constructor.name + " from RNet.");
 
         if (packet.requiresHandshake()) {
+            this._waitingForHandshake = true;
             this.sendData(new HandshakePacket(packet.sourceControllerID, 2));
         }
 
         if (packet instanceof ZoneInfoPacket) {
             const zone = this.getZone(packet.getControllerID(), packet.getZoneID());
             if (zone) {
+				//console.log("DEBUG: Received packet " + packet.constructor.name + " from RNet. ZONE %d", packet.getZoneID());
                 zone.setPower(packet.getPower(), true);
                 zone.setSourceID(packet.getSourceID(), true);
                 zone.setVolume(packet.getVolume(), true);
@@ -693,10 +703,10 @@ class RNet extends EventEmitter {
 
             switch (packet.getRenderType()) {
                 case RenderedDisplayMessagePacket.TYPE_SOURCE_NAME:
-                    this.getZone(packet.targetControllerID, packet.targetZoneID).setSourceID(packet.getHighValue(), true);
+                    this.getZone(packet.sourceControllerID, packet.targetZoneID).setSourceID(packet.getHighValue(), true);
                     break;
                 case RenderedDisplayMessagePacket.TYPE_VOLUME:
-                    this.getZone(packet.targetControllerID, packet.targetZoneID).setVolume(packet.getLowValue() * 2, true);
+                    this.getZone(packet.sourceControllerID, packet.targetZoneID).setVolume(packet.getLowValue() * 2, true);
                     break;
             }
         }

@@ -42,11 +42,11 @@ class ZoneInfoPacket extends DataPacket {
     }
 
     getPartyMode() {
-        return this.data.readUInt8(8);
+        return this.data.readUInt8(9);
     }
 
     getDoNotDisturbMode() {
-        return this.data.readUInt8(9);
+        return this.data.readUInt8(10);
     }
 }
 
