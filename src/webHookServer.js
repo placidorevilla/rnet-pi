@@ -1,6 +1,8 @@
 const EventEmitter = require("events");
 const express = require("express");
 
+const ExtraZoneParam = require("./rnet/extraZoneParam");
+
 class WebHookServer extends EventEmitter {
     constructor(port, password, rNet) {
         super();
@@ -13,6 +15,7 @@ class WebHookServer extends EventEmitter {
         this._port = port;
         this._app = express();
 
+        this._app.use(express.json())
         this._app.use(function(req, res, next) {
             if (req.query.pass != password) {
                 res.sendStatus(401);
@@ -33,22 +36,22 @@ class WebHookServer extends EventEmitter {
         });
 
         this._app.put("/on", function(req, res) {
-            req.zone.setAllPower(true);
+            rNet.setAllPower(true);
             res.sendStatus(200);
         });
 
         this._app.put("/off", function(req, res) {
-            req.zone.setAllPower(false);
+            rNet.setAllPower(false);
             res.sendStatus(200);
         });
 
         this._app.put("/mute", function(req, res) {
-            req.zone.setAllMute(true, 1000);
+            rNet.setAllMute(true, 1000);
             res.sendStatus(200);
         });
 
         this._app.put("/unmute", function(req, res) {
-            req.zone.setAllMute(false, 1000);
+            rNet.setAllMute(false, 1000);
             res.sendStatus(200);
         });
 
@@ -90,14 +93,78 @@ class WebHookServer extends EventEmitter {
             res.sendStatus(200);
         });
 
-        this._app.put("/:zone/on", function(req, res) {
-            req.zone.setPower(true);
+        this._app.get("/:zone/power", function(req, res) {
+            res.status(200).send({"power": req.zone.getPower()});
+        });
+
+        this._app.put("/:zone/power", function(req, res) {
+            req.zone.setPower(req.body.power);
             res.sendStatus(200);
         });
 
-        this._app.put("/:zone/off", function(req, res) {
-            req.zone.setPower(false);
+        this._app.get("/:zone/muted", function(req, res) {
+            res.status(200).send({"muted": req.zone.getMuted()});
+        });
+
+        this._app.put("/:zone/muted", function(req, res) {
+            req.zone.setMute(req.body.muted);
             res.sendStatus(200);
+        });
+
+        this._app.get("/:zone/volume", function(req, res) {
+            res.status(200).send({"volume": req.zone.getVolume()});
+        });
+
+        this._app.put("/:zone/volume", function(req, res) {
+            req.zone.setVolume(Math.floor(parseInt(req.body.volume) / 2) * 2);
+            res.sendStatus(200);
+        });
+
+        this._app.get("/:zone/source", function(req, res) {
+            res.status(200).send({"source": rNet.getSource(req.zone.getSourceID()).getName()});
+        });
+
+        this._app.put("/:zone/source", function(req, res) {
+            const sourceID = rNet.findSourceIDByName(req.body.source);
+            if (sourceID !== false) {
+                req.zone.setSourceID(sourceID);
+                res.sendStatus(200);
+            }
+            else {
+                res.sendStatus(404);
+            }
+        });
+
+        this._app.get("/sources", function(req, res) {
+            res.status(200).send({"sources": rNet.getSources().map(x => x.getName())});
+        });
+
+        this._app.get("/zones", function(req, res) {
+            var zones = [];
+            for (let ctrllrID = 0; ctrllrID < rNet.getControllersSize(); ctrllrID++)
+                for (let zoneID = 0; zoneID < rNet.getZonesSize(ctrllrID); zoneID++)
+                    zones.push(rNet.getZone(ctrllrID, zoneID).getName());
+
+            res.status(200).send({"zones": zones});
+        });
+
+        this._app.get("/:zone/status", function(req, res) {
+            res.status(200).send({
+                "power": req.zone.getPower(),
+                "controllerID": req.zone.getControllerID(),
+                "zoneID": req.zone.getZoneID(),
+                "volume": req.zone.getVolume(),
+                "maxVolume": req.zone.getMaxVolume(),
+                "muted": req.zone.getMuted(),
+                "source": rNet.getSource(req.zone.getSourceID()).getName(),
+                "bass": req.zone.getParameter(ExtraZoneParam.BASS),
+                "treble": req.zone.getParameter(ExtraZoneParam.TREBLE),
+                "loudness": req.zone.getParameter(ExtraZoneParam.LOUDNES),
+                "balance": req.zone.getParameter(ExtraZoneParam.BALANCE),
+                "turn_on_volume": req.zone.getParameter(ExtraZoneParam.TURN_ON_VOLUME),
+                "do_not_disturb": req.zone.getParameter(ExtraZoneParam.DO_NOT_DISTURB),
+                "party_mode": req.zone.getParameter(ExtraZoneParam.PARTY_MODE),
+            });
         });
     }
 
