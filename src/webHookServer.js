@@ -73,7 +73,7 @@ class WebHookServer extends EventEmitter {
         });
 
         this._app.put("/:zone/source/:source", function(req, res) {
-            const sourceID = rNet.findSourceIDByName(req.params.name);
+            const sourceID = rNet.findSourceByName(req.params.name);
             if (sourceID !== false) {
                 req.zone.setSourceID(sourceID);
                 res.sendStatus(200);
@@ -125,9 +125,9 @@ class WebHookServer extends EventEmitter {
         });
 
         this._app.put("/:zone/source", function(req, res) {
-            const sourceID = rNet.findSourceIDByName(req.body.source);
-            if (sourceID !== false) {
-                req.zone.setSourceID(sourceID);
+            const source = rNet.findSourceByName(req.body.source);
+            if (source !== false) {
+                req.zone.setSourceID(source.getSourceID());
                 res.sendStatus(200);
             }
             else {
@@ -136,7 +136,7 @@ class WebHookServer extends EventEmitter {
         });
 
         this._app.get("/sources", function(req, res) {
-            res.status(200).send({"sources": rNet.getSources().map(x => x.getName())});
+            res.status(200).send({"sources": rNet.getSources().filter(x => x).map(x => x.getName())});
         });
 
         this._app.get("/zones", function(req, res) {
