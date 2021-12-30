@@ -6,7 +6,7 @@ module.exports = {
     read: function() {
         var contents = "";
         try {
-            contents = fs.readFileSync("config.json");
+            contents = fs.readFileSync("data/config.json");
         }
         catch (e) {}
 
@@ -24,7 +24,7 @@ module.exports = {
         }
     },
     write: function() {
-        fs.writeFileSync("config.json", JSON.stringify(data));
+        fs.writeFileSync("data/config.json", JSON.stringify(data));
     },
     get: function(key) {
         return data[key];

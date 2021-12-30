@@ -70,7 +70,7 @@ class RNet extends EventEmitter {
     readConfiguration() {
         var sourceFile;
         try {
-            sourceFile = fs.readFileSync("sources.json");
+            sourceFile = fs.readFileSync("data/sources.json");
         }
         catch (e) {}
 
@@ -95,7 +95,7 @@ class RNet extends EventEmitter {
 
         var zonesFile = "";
         try {
-            zonesFile = fs.readFileSync("zones.json");
+            zonesFile = fs.readFileSync("data/zones.json");
         }
         catch (e) {}
 
@@ -147,7 +147,7 @@ class RNet extends EventEmitter {
             }
         }
 
-        fs.writeFileSync("sources.json", JSON.stringify(sources));
+        fs.writeFileSync("data/sources.json", JSON.stringify(sources));
     }
 
     writeZones() {
@@ -175,7 +175,7 @@ class RNet extends EventEmitter {
             }
         }
 
-        fs.writeFileSync("zones.json", JSON.stringify(zones));
+        fs.writeFileSync("data/zones.json", JSON.stringify(zones));
     }
 
     createZone(ctrllrID, zoneID, name, writeConfig=true) {
